@@ -60,20 +60,22 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import FacturaForm from "../components/FacturaForm.vue";
-import { useFacturaStore } from "../store";
+import FacturaForm from '../components/FacturaForm.vue'
+import { useFacturaStore } from '../store'
+import * as bootstrap from 'bootstrap' // <-- IMPORTAR AQUÍ también
 
-const store = useFacturaStore();
+const store = useFacturaStore()
 
 const guardarFactura = (factura) => {
-  store.agregarFactura(factura);
+  store.agregarFactura(factura)
 
-  // Cerrar el modal manualmente con Bootstrap API
-  const modal = bootstrap.Modal.getInstance(
-    document.getElementById("crearFacturaModal")
-  );
-  modal.hide();
-};
+  // Cerrar modal de forma segura si existe
+  const modalElement = document.getElementById('crearFacturaModal')
+  if (modalElement) {
+    const modalInstance = bootstrap.Modal.getInstance(modalElement)
+      || new bootstrap.Modal(modalElement)
+    modalInstance.hide()
+  }
+}
 </script>

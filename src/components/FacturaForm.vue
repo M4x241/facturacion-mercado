@@ -1,129 +1,244 @@
 <template>
-  <form @submit.prevent="emitirFactura">
-    <!-- Cliente -->
-    <div class="mb-3">
-      <label class="form-label">Cliente</label>
-      <input v-model="factura.cliente" class="form-control" required />
+  <div class="factura-form">
+    <form @submit.prevent="agregarProducto" class="producto-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Producto</label>
+          <input 
+            v-model="nuevoProducto.nombre" 
+            type="text" 
+            class="form-input" 
+            placeholder="Nombre del producto"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Cantidad</label>
+          <input 
+            v-model.number="nuevoProducto.cantidad" 
+            type="number" 
+            class="form-input" 
+            placeholder="1"
+            min="1"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Precio Unitario</label>
+          <input 
+            v-model.number="nuevoProducto.precio" 
+            type="number" 
+            step="0.01" 
+            class="form-input" 
+            placeholder="0.00"
+            min="0"
+            required
+          >
+        </div>
+        
+        <div class="form-group btn-group">
+          <button type="submit" class="btn btn-primary">➕ Agregar</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="productos-list">
+      <div v-if="productos.length === 0" class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <p>No hay productos agregados</p>
+      </div>
+      
+      <div v-else class="productos-container">
+        <div v-for="(producto, index) in productos" :key="index" class="producto-item">
+          <div class="producto-info">
+            <div class="producto-nombre">{{ producto.nombre }}</div>
+            <div class="producto-detalles">
+              {{ producto.cantidad }} x ${{ producto.precio.toFixed(2) }}
+            </div>
+          </div>
+          <div class="producto-total">${{ (producto.cantidad * producto.precio).toFixed(2) }}</div>
+          <button @click="eliminarProducto(index)" class="btn-remove">🗑️</button>
+        </div>
+      </div>
     </div>
 
-    <!-- Fecha actual por defecto -->
-    <div class="mb-3">
-      <label class="form-label">Fecha</label>
-      <input type="date" v-model="factura.fecha" class="form-control" required />
+    <div class="form-actions">
+      <button @click="generarFactura" class="btn btn-primary" :disabled="productos.length === 0">
+        📄 Generar Factura
+      </button>
+      <button @click="limpiarFormulario" class="btn btn-secondary">
+        🗑️ Limpiar Todo
+      </button>
     </div>
-
-    <!-- Productos dinámicos -->
-    <div class="mb-3">
-      <label class="form-label">Productos</label>
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio (Bs)</th>
-            <th>Total</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, index) in factura.productos" :key="index">
-            <td><input v-model="item.nombre" class="form-control" required /></td>
-            <td><input v-model.number="item.cantidad" type="number" class="form-control" min="1" required /></td>
-            <td><input v-model.number="item.precio" type="number" class="form-control" min="0" required /></td>
-            <td>Bs {{ (item.cantidad * item.precio).toFixed(2) }}</td>
-            <td><button type="button" class="btn btn-sm btn-danger" @click="eliminarProducto(index)">×</button></td>
-          </tr>
-        </tbody>
-      </table>
-      <button type="button" class="btn btn-outline-primary btn-sm" @click="agregarProducto">+ Añadir Producto</button>
-    </div>
-
-    <!-- Total -->
-    <div class="mb-3 text-end">
-      <strong>Total: Bs {{ totalFactura.toFixed(2) }}</strong>
-    </div>
-
-    <!-- Emitir -->
-    <div class="text-end">
-      <button type="submit" class="btn btn-success">Emitir y Generar PDF</button>
-    </div>
-  </form>
+  </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-
-
-const emit = defineEmits(['crear'])
-
-const hoy = new Date().toISOString().split('T')[0]
-
-const factura = ref({
-  cliente: '',
-  fecha: hoy,
-  productos: [
-    { nombre: '', cantidad: 1, precio: 0 }
-  ]
-})
-
-const agregarProducto = () => {
-  factura.value.productos.push({ nombre: '', cantidad: 1, precio: 0 })
-}
-
-const eliminarProducto = (index) => {
-  factura.value.productos.splice(index, 1)
-}
-
-const totalFactura = computed(() =>
-  factura.value.productos.reduce((suma, p) => suma + (p.cantidad * p.precio), 0)
-)
-
-const emitirFactura = () => {
-  const datos = {
-    ...factura.value,
-    total: totalFactura.value
+<script>
+export default {
+  name: 'FacturaForm',
+  data() {
+    return {
+      productos: [],
+      nuevoProducto: {
+        nombre: '',
+        cantidad: 1,
+        precio: 0
+      }
+    }
+  },
+  methods: {
+    agregarProducto() {
+      if (this.nuevoProducto.nombre && this.nuevoProducto.cantidad > 0 && this.nuevoProducto.precio >= 0) {
+        this.productos.push({
+          nombre: this.nuevoProducto.nombre,
+          cantidad: this.nuevoProducto.cantidad,
+          precio: this.nuevoProducto.precio
+        });
+        this.resetFormulario();
+        this.emitirCambios();
+      }
+    },
+    eliminarProducto(index) {
+      this.productos.splice(index, 1);
+      this.emitirCambios();
+    },
+    resetFormulario() {
+      this.nuevoProducto = {
+        nombre: '',
+        cantidad: 1,
+        precio: 0
+      };
+    },
+    limpiarFormulario() {
+      this.productos = [];
+      this.resetFormulario();
+      this.emitirCambios();
+    },
+    generarFactura() {
+      if (this.productos.length > 0) {
+        const factura = {
+          numero: 'NF-' + Date.now().toString().slice(-6),
+          fecha: new Date().toISOString(),
+          productos: [...this.productos]
+        };
+        this.$emit('factura-creada', factura);
+        alert('Factura generada exitosamente: ' + factura.numero);
+      }
+    },
+    emitirCambios() {
+      this.$emit('factura-creada', { productos: [...this.productos] });
+    }
   }
-
-  emit('crear', datos)
-  generarPDF(datos)
-
-  // Reiniciar formulario
-  factura.value = {
-    cliente: '',
-    fecha: hoy,
-    productos: [{ nombre: '', cantidad: 1, precio: 0 }]
-  }
-}
-
-// PDF
-const generarPDF = (factura) => {
-  const doc = new jsPDF()
-
-  doc.setFontSize(16)
-  doc.text('Factura', 14, 20)
-
-  doc.setFontSize(10)
-  doc.text(`Cliente: ${factura.cliente}`, 14, 30)
-  doc.text(`Fecha: ${factura.fecha}`, 14, 36)
-
-  const rows = factura.productos.map(p => [
-    p.nombre,
-    p.cantidad,
-    p.precio.toFixed(2),
-    (p.cantidad * p.precio).toFixed(2)
-  ])
-
-  autoTable(doc, {
-    startY: 45,
-    head: [['Producto', 'Cantidad', 'Precio (Bs)', 'Total']],
-    body: rows
-  })
-
-  doc.text(`Total: Bs ${factura.total.toFixed(2)}`, 14, doc.lastAutoTable.finalY + 10)
-
-  window.open(doc.output('bloburl'), '_blank')
-
 }
 </script>
+
+<style scoped>
+.form-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 30px;
+  align-items: end;
+}
+
+.btn-group {
+  display: flex;
+  align-items: end;
+}
+
+.productos-container {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.producto-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  animation: slideIn 0.5s ease-out;
+}
+
+.producto-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #00f5ff;
+  transform: translateX(5px);
+}
+
+.producto-info {
+  flex: 1;
+}
+
+.producto-nombre {
+  font-weight: bold;
+  color: #00f5ff;
+  margin-bottom: 5px;
+}
+
+.producto-detalles {
+  font-size: 0.9rem;
+  color: #a0a0a0;
+}
+
+.producto-total {
+  color: #f5ff00;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-right: 10px;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  color: #ff4757;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.btn-remove:hover {
+  background: rgba(255, 71, 87, 0.2);
+  transform: scale(1.2);
+}
+
+.empty-state {
+  text-align: center;
+  color: #a0a0a0;
+  padding: 40px 20px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.form-actions .btn {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+</style>

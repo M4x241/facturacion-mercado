@@ -1,81 +1,89 @@
 <template>
-  <div>
-    <h2 class="mb-3">Emisión de Factura</h2>
-    <!-- Botón para abrir el modal -->
-    <button
-      class="btn btn-primary"
-      data-bs-toggle="modal"
-      data-bs-target="#crearFacturaModal"
-    >
-      Nueva Factura
-    </button>
-    <div class="text-center mt-5">
-      <img
-        src="https://cdn-icons-png.flaticon.com/512/2936/2936884.png"
-        width="150"
-        alt="Factura"
-      />
-      <h5 class="mt-3">Aquí puedes emitir una nueva factura</h5>
-      <p class="text-muted">
-        Presiona el botón azul para registrar una transacción.
-      </p>
-    </div>
-
-    <!-- debajo del botón de abrir modal -->
-    <div class="mt-5">
-      <h5>Última Factura Emitida</h5>
-      <div class="card shadow-sm mt-3">
-        <div class="card-body">
-          <p><strong>Cliente:</strong> Juan Pérez</p>
-          <p><strong>Fecha:</strong> 2025-06-08</p>
-          <p><strong>Monto:</strong> Bs 350.00</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal -->
-    <div
-      class="modal fade"
-      id="crearFacturaModal"
-      tabindex="-1"
-      aria-labelledby="crearFacturaLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="crearFacturaLabel">Nueva Factura</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Cerrar"
-            ></button>
+  <div class="crear-factura">
+    <div class="container">
+      <h1 class="section-title">🚀 Crear Nueva Factura</h1>
+      
+      <div class="factura-container">
+        <div class="left-panel">
+          <div class="glass-panel">
+            <h2 class="panel-title">📋 Información de la Factura</h2>
+            <FacturaForm @factura-creada="handleFacturaCreada" />
           </div>
-          <div class="modal-body">
-            <FacturaForm @crear="guardarFactura" />
+        </div>
+        
+        <div class="right-panel">
+          <div class="glass-panel">
+            <h2 class="panel-title">📊 Resumen</h2>
+            <DetalleFactura 
+              :productos="productos" 
+              :subtotal="subtotal"
+              :impuesto="impuesto"
+              :total="total"
+              @producto-removido="removeProducto"
+            />
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-<script setup>
+
+<script>
 import FacturaForm from '../components/FacturaForm.vue'
-import { useFacturaStore } from '../store'
-import * as bootstrap from 'bootstrap' // <-- IMPORTAR AQUÍ también
+import DetalleFactura from '../components/DetalleFactura.vue'
 
-const store = useFacturaStore()
-
-const guardarFactura = (factura) => {
-  store.agregarFactura(factura)
-
-  // Cerrar modal de forma segura si existe
-  const modalElement = document.getElementById('crearFacturaModal')
-  if (modalElement) {
-    const modalInstance = bootstrap.Modal.getInstance(modalElement)
-      || new bootstrap.Modal(modalElement)
-    modalInstance.hide()
+export default {
+  name: 'CrearFacturaView',
+  components: {
+    FacturaForm,
+    DetalleFactura
+  },
+  data() {
+    return {
+      productos: [],
+      impuestoRate: 0.19
+    }
+  },
+  computed: {
+    subtotal() {
+      return this.productos.reduce((sum, producto) => sum + (producto.cantidad * producto.precio), 0);
+    },
+    impuesto() {
+      return this.subtotal * this.impuestoRate;
+    },
+    total() {
+      return this.subtotal + this.impuesto;
+    }
+  },
+  methods: {
+    handleFacturaCreada(factura) {
+      this.productos = factura.productos;
+    },
+    removeProducto(index) {
+      this.productos.splice(index, 1);
+    }
   }
 }
 </script>
+
+<style scoped>
+.factura-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.panel-title {
+  color: #00f5ff;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .factura-container {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

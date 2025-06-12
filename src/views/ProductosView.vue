@@ -1,73 +1,156 @@
 <template>
-  <div>
-    <h2 class="mb-4">Listado de Productos</h2>
+  <div class="productos-view">
+    <div class="container">
+      <h1 class="section-title">📦 Gestión de Productos</h1>
 
-    <div class="table-responsive shadow-sm rounded">
-      <table class="table table-striped table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>#</th>
-            <th>Nombre</th>
-            <th>Código</th>
-            <th>Categoría</th>
-            <th>Precio (Bs)</th>
-            <th>Stock</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(producto, index) in productos" :key="producto.codigo">
-            <td>{{ index + 1 }}</td>
-            <td>{{ producto.nombre }}</td>
-            <td>{{ producto.codigo }}</td>
-            <td>{{ producto.categoria }}</td>
-            <td>{{ producto.precio.toFixed(2) }}</td>
-            <td>
-              <span class="badge bg-success" v-if="producto.stock > 0">{{ producto.stock }}</span>
-              <span class="badge bg-danger" v-else>Agotado</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="glass-panel">
+        <form @submit.prevent="agregarProducto" class="form-grid">
+          <input
+            v-model="nuevoProducto.nombre"
+            class="form-input"
+            placeholder="Nombre del producto"
+            required
+          />
+          <input
+            v-model.number="nuevoProducto.precio"
+            type="number"
+            step="0.01"
+            class="form-input"
+            placeholder="Precio"
+            required
+          />
+          <input
+            v-model.number="nuevoProducto.stock"
+            type="number"
+            class="form-input"
+            placeholder="Stock"
+            required
+          />
+          <button type="submit" class="btn btn-primary">➕ Agregar</button>
+        </form>
+      </div>
+
+      <div class="glass-panel table-container">
+        <table class="productos-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(producto, index) in productos" :key="index">
+              <td>{{ producto.nombre }}</td>
+              <td>${{ producto.precio.toFixed(2) }}</td>
+              <td>{{ producto.stock }}</td>
+              <td>
+                <button class="btn btn-secondary" @click="editarProducto(index)">✏️</button>
+                <button class="btn btn-danger" @click="eliminarProducto(index)">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div v-if="productos.length === 0" class="no-productos">
+          <p>No hay productos registrados</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<script setup>
-const productos = [
-  {
-    nombre: 'Laptop Dell Inspiron 15',
-    codigo: 'P001',
-    categoria: 'Electrónica',
-    precio: 4800,
-    stock: 12
+<script>
+export default {
+  name: 'ProductosView',
+  data() {
+    return {
+      productos: [
+        { nombre: 'Arroz', precio: 5.25, stock: 120 },
+        { nombre: 'Aceite', precio: 8.10, stock: 85 },
+        { nombre: 'Fideos', precio: 2.75, stock: 200 }
+      ],
+      nuevoProducto: {
+        nombre: '',
+        precio: 0,
+        stock: 0
+      },
+      editIndex: null
+    }
   },
-  {
-    nombre: 'Mouse Inalámbrico Logitech',
-    codigo: 'P002',
-    categoria: 'Accesorios',
-    precio: 150,
-    stock: 25
-  },
-  {
-    nombre: 'Impresora HP DeskJet 2720',
-    codigo: 'P003',
-    categoria: 'Oficina',
-    precio: 790,
-    stock: 6
-  },
-  {
-    nombre: 'Silla Ergonómica Reclinable',
-    codigo: 'P004',
-    categoria: 'Muebles',
-    precio: 1300,
-    stock: 0
-  },
-  {
-    nombre: 'Monitor Samsung 24” LED',
-    codigo: 'P005',
-    categoria: 'Pantallas',
-    precio: 1250,
-    stock: 8
+  methods: {
+    agregarProducto() {
+      if (this.editIndex === null) {
+        this.productos.push({ ...this.nuevoProducto });
+      } else {
+        this.productos.splice(this.editIndex, 1, { ...this.nuevoProducto });
+        this.editIndex = null;
+      }
+      this.resetFormulario();
+    },
+    eliminarProducto(index) {
+      this.productos.splice(index, 1);
+    },
+    editarProducto(index) {
+      const producto = this.productos[index];
+      this.nuevoProducto = { ...producto };
+      this.editIndex = index;
+    },
+    resetFormulario() {
+      this.nuevoProducto = {
+        nombre: '',
+        precio: 0,
+        stock: 0
+      };
+    }
   }
-]
+}
 </script>
+
+<style scoped>
+.form-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 15px;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.table-container {
+  overflow-x: auto;
+  padding: 20px;
+}
+
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+  font-size: 0.95rem;
+}
+
+.productos-table th,
+.productos-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.productos-table th {
+  background: rgba(255, 255, 255, 0.05);
+  color: #00f5ff;
+}
+
+.no-productos {
+  text-align: center;
+  padding: 30px;
+  color: #a0a0a0;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

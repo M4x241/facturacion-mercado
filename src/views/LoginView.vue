@@ -40,7 +40,7 @@
             contrasena: this.contrasena
           })
           localStorage.setItem('token', res.data.token)
-          this.$router.push('/') // redirige a la página principal
+          this.$router.push('/home') // redirige a la página principal
         } catch (err) {
           this.error = 'Credenciales incorrectas o error del servidor.'
           console.error(err)

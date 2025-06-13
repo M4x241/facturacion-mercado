@@ -7,7 +7,7 @@
       </div>
       
       <div class="nav-menu" :class="{ active: isMenuOpen }">
-        <router-link to="/" class="nav-link" @click="closeMenu">🏠 Inicio</router-link>
+        <router-link to="/home" class="nav-link" @click="closeMenu">🏠 Inicio</router-link>
         <router-link to="/crear-factura" class="nav-link" @click="closeMenu">📄 Nueva Factura</router-link>
         <router-link to="/ver-facturas" class="nav-link" @click="closeMenu">📋 Ver Facturas</router-link>
         <router-link to="/productos" class="nav-link" @click="closeMenu">📦 Productos</router-link>

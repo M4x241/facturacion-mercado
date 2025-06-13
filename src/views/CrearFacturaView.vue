@@ -1,38 +1,6 @@
 <template>
   <div class="glass-panel container">
     <h2 class="section-title">Nueva Factura</h2>
-
-    <div class="form-group">
-      <label class="form-label">Cliente</label>
-      <select v-model="nuevaFactura.clienteId" class="form-input">
-        <option disabled value="">Seleccione un cliente</option>
-        <option v-for="c in clientes" :key="c.id" :value="c.id">
-          {{ c.nombre }}
-        </option>
-      </select>
-    </div>
-
-    <div v-for="(p, i) in nuevaFactura.productos" :key="i" class="form-group">
-      <label class="form-label">Producto {{ i + 1 }}</label>
-      <select v-model="p.productoId" class="form-input">
-        <option disabled value="">Seleccione</option>
-        <option v-for="pd in productosDisponibles" :value="pd.id">
-          {{ pd.nombre }}
-        </option>
-      </select>
-
-      <input
-        type="number"
-        v-model="p.cantidad"
-        class="form-input mt-2"
-        min="1"
-        placeholder="Cantidad"
-      />
-
-      <button class="btn btn-danger mt-1" @click="eliminarProducto(i)">
-        Eliminar
-      </button>
-    </div>
     <div class="glass-panel mt-4">
       <h3 class="section-title">Resumen</h3>
       <table class="form-group" style="width: 100%">
@@ -54,6 +22,39 @@
         </tbody>
       </table>
     </div>
+    <div class="form-group">
+      <label class="form-label">Cliente</label>
+      <select v-model="nuevaFactura.clienteId" class="form-input">
+        <option disabled value="">Seleccione un cliente</option>
+        <option v-for="c in clientes" :key="c.id" :value="c.id">
+          {{ c.nombre }}
+        </option>
+      </select>
+    </div>
+
+    <div v-for="(p, i) in nuevaFactura.productos" :key="i" class="form-group">
+  <label class="form-label">Producto {{ i + 1 }}</label>
+  <select v-model="p.productoId" class="form-input">
+    <option disabled value="">Seleccione</option>
+    <option v-for="pd in productosDisponibles" :value="pd.id">
+      {{ pd.nombre }}
+    </option>
+  </select>
+
+  <div class="cantidad-eliminar-row mt-2" style="display: grid; grid-template-columns: 1fr auto; gap: 10px;">
+    <input
+      type="number"
+      v-model="p.cantidad"
+      class="form-input"
+      min="1"
+      placeholder="Cantidad"
+    />
+    <button class="btn btn-danger" @click="eliminarProducto(i)">
+      Eliminar
+    </button>
+  </div>
+</div>
+
 
     <button class="btn btn-secondary mt-2" @click="agregarProducto">
       + Agregar Producto
@@ -126,64 +127,66 @@ export default {
       this.nuevaFactura.productos.splice(index, 1);
     },
     async guardarFactura() {
-  if (
-    !this.nuevaFactura.clienteId ||
-    this.nuevaFactura.productos.length === 0
-  ) {
-    alert("Debe seleccionar un cliente y al menos un producto.");
-    return;
-  }
+      if (
+        !this.nuevaFactura.clienteId ||
+        this.nuevaFactura.productos.length === 0
+      ) {
+        alert("Debe seleccionar un cliente y al menos un producto.");
+        return;
+      }
 
-  const usuarioId = 2; // o usa tu store si tienes login dinámico
-  const fechaActual = new Date().toISOString();
+      const usuarioId = 2; // o usa tu store si tienes login dinámico
+      const fechaActual = new Date().toISOString();
 
-  // Generar un número único de factura (esto puede mejorarse en el backend)
-  const numeroFactura = "NF-" + Math.floor(Math.random() * 9000 + 1000);
+      // Generar un número único de factura (esto puede mejorarse en el backend)
+      const numeroFactura = "NF-" + Math.floor(Math.random() * 9000 + 1000);
 
-  const productosMap = Object.fromEntries(
-    this.productosDisponibles.map((p) => [p.id, p])
-  );
+      const productosMap = Object.fromEntries(
+        this.productosDisponibles.map((p) => [p.id, p])
+      );
 
-  const detalles = this.nuevaFactura.productos.map((item) => {
-    const producto = productosMap[item.productoId];
-    return {
-      productoId: item.productoId,
-      cantidad: item.cantidad,
-      precioUnitario: parseFloat(producto.precio), // importante que sea number
-    };
-  });
+      const detalles = this.nuevaFactura.productos.map((item) => {
+        const producto = productosMap[item.productoId];
+        return {
+          productoId: item.productoId,
+          cantidad: item.cantidad,
+          precioUnitario: parseFloat(producto.precio), // importante que sea number
+        };
+      });
 
-  const subtotal = detalles.reduce((acc, d) => acc + d.precioUnitario * d.cantidad, 0);
-  const impuesto = subtotal * 0.13;
-  const total = subtotal + impuesto;
+      const subtotal = detalles.reduce(
+        (acc, d) => acc + d.precioUnitario * d.cantidad,
+        0
+      );
+      const impuesto = subtotal * 0.13;
+      const total = subtotal + impuesto;
 
-  const facturaFinal = {
-    numero: numeroFactura,
-    fecha: fechaActual,
-    clienteId: this.nuevaFactura.clienteId,
-    usuarioId,
-    subtotal: parseFloat(subtotal.toFixed(2)),
-    impuesto: parseFloat(impuesto.toFixed(2)),
-    total: parseFloat(total.toFixed(2)),
-    detalles,
-  };
+      const facturaFinal = {
+        numero: numeroFactura,
+        fecha: fechaActual,
+        clienteId: this.nuevaFactura.clienteId,
+        usuarioId,
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        impuesto: parseFloat(impuesto.toFixed(2)),
+        total: parseFloat(total.toFixed(2)),
+        detalles,
+      };
 
-  console.log("Factura final a enviar: ", facturaFinal);
+      console.log("Factura final a enviar: ", facturaFinal);
 
-  try {
-    const res = await api.post("/facturas", facturaFinal);
-    const facturaId = res.data.id;
+      try {
+        const res = await api.post("/facturas", facturaFinal);
+        const facturaId = res.data.id;
 
-    alert("✅ Factura emitida correctamente");
+        alert("✅ Factura emitida correctamente");
 
-    window.open(`/api/facturas/${facturaId}/pdf`, "_blank");
-    this.$router.push("/ver-facturas");
-  } catch (error) {
-    alert("❌ Ocurrió un error al emitir la factura");
-    console.error(error);
-  }
-}
-,
+        window.open(`/api/facturas/${facturaId}/pdf`, "_blank");
+        this.$router.push("/ver-facturas");
+      } catch (error) {
+        alert("❌ Ocurrió un error al emitir la factura");
+        console.error(error);
+      }
+    },
   },
 };
 </script>

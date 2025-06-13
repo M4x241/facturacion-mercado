@@ -14,6 +14,3 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
-
-app.use(router);
-app.mount("#app");

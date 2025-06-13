@@ -11,12 +11,12 @@ const routes = [
     name: "Login",
     component: () => import("../views/LoginView.vue"),
   },
-  {
-    path: "/dashboard",
-    name: "Dashboard",
-    component: () => import("@/views/DashboardView.vue"),
-    meta: { requiresAuth: true },
-  },
+  // {
+  //   path: "/dashboard",
+  //   name: "Dashboard",
+  //   component: () => import("@/views/DashboardView.vue"),
+  //   meta: { requiresAuth: true },
+  // },
   {
     path: "/crear-factura",
     name: "CrearFactura",
@@ -44,8 +44,10 @@ const routes = [
   },
   {
     path: "/reportes",
-    name: "Reportes",
-    component: () => import("../views/ReportesView.vue"),
+    name: "Dashboard",
+    component: () => import("@/views/DashboardView.vue"),
+    // name: "ReportesView",
+    // component: () => import("../views/ReportesView.vue"),
   },
   {
     path: "/configuracion",

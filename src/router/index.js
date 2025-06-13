@@ -7,13 +7,24 @@ const routes = [
     component: () => import("../views/HomeView.vue"),
   },
   {
+    path: "/login",
+    name: "Login",
+    component: () => import("../views/LoginView.vue"),
+  },
+  {
+    path: "/dashboard",
+    name: "Dashboard",
+    component: () => import("@/views/DashboardView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/crear-factura",
     name: "CrearFactura",
     component: () => import("../views/CrearFacturaView.vue"),
   },
   {
     path: "/ver-facturas",
-    name: "VerFacturas",
+    name: "VerFacturasView",
     component: () => import("../views/VerFacturasView.vue"),
   },
   {

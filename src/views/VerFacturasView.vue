@@ -18,16 +18,25 @@
             <tr v-for="(factura, index) in facturas" :key="index">
               <td>{{ factura.numero }}</td>
               <td>{{ formatearFecha(factura.fecha) }}</td>
-              <td>{{ factura.cliente }}</td>
-              <td>${{ factura.total.toFixed(2) }}</td>
+              <td>{{ factura.cliente?.nombre || "Sin nombre" }}</td>
+              <td>Bs {{ Number(factura.total).toFixed(2) }}</td>
+
               <td>
-                <button class="btn btn-secondary" @click="verDetalle(factura)">
+                <button
+                  class="btn btn-secondary"
+                  @click="verDetalle(factura.id, factura.numero)"
+                >
                   🔍 Ver
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
+        <DetalleFactura
+          v-if="facturaSeleccionada"
+          :factura="facturaSeleccionada"
+          @cerrar="facturaSeleccionada = null"
+        />
 
         <div v-if="facturas.length === 0" class="no-facturas">
           <p>No hay facturas registradas</p>
@@ -38,43 +47,40 @@
 </template>
 
 <script>
-import { format } from '../utils/formateadorFechas'
+import { format } from "../utils/formateadorFechas";
+import facturaService from "../services/facturaService";
+import DetalleFactura from "../components/DetalleFactura.vue";
 
 export default {
-  name: 'VerFacturasView',
+  name: "VerFacturasView",
+  components: {
+    DetalleFactura,
+  },
   data() {
     return {
-      facturas: [
-        {
-          numero: 'NF-1023',
-          fecha: '2025-06-10T15:30:00',
-          cliente: 'Juan Pérez',
-          total: 125.50
-        },
-        {
-          numero: 'NF-1024',
-          fecha: '2025-06-10T17:00:00',
-          cliente: 'Ana López',
-          total: 89.90
-        },
-        {
-          numero: 'NF-1025',
-          fecha: '2025-06-11T11:15:00',
-          cliente: 'Carlos Rodríguez',
-          total: 142.75
-        }
-      ]
+      facturas: [],
+      facturaSeleccionada: null,
+    };
+  },
+  async mounted() {
+    try {
+      const response = await facturaService.obtenerFacturas();
+      this.facturas = response;
+    } catch (error) {
+      console.error("Error al obtener facturas:", error);
     }
   },
   methods: {
-    verDetalle(factura) {
-      alert(`Detalle de factura ${factura.numero}\nCliente: ${factura.cliente}\nTotal: $${factura.total.toFixed(2)}`);
+    verDetalle(id, numero) {
+      const API_BASE = import.meta.env.VITE_API_URL;
+
+      window.open(`${API_BASE}/api/facturas/${id}/pdf`, "_blank");
     },
     formatearFecha(fecha) {
       return format(new Date(fecha));
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

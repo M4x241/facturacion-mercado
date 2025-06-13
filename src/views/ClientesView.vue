@@ -46,45 +46,40 @@
 </template>
 
 <script>
+import api from '@/utils/api'
+
 export default {
-  name: 'ClientesView',
   data() {
     return {
-      clientes: [
-        { nombre: 'Juan Pérez', ci: '12345678', email: 'juan@example.com' },
-        { nombre: 'Ana López', ci: '87654321', email: 'ana@example.com' }
-      ],
+      clientes: [],
       nuevoCliente: {
         nombre: '',
-        ci: '',
-        email: ''
-      },
-      editIndex: null
+        nit: '',
+        direccion: ''
+      }
     }
   },
+  mounted() {
+    this.obtenerClientes()
+  },
   methods: {
-    guardarCliente() {
-      if (this.editIndex === null) {
-        this.clientes.push({ ...this.nuevoCliente })
-      } else {
-        this.clientes.splice(this.editIndex, 1, { ...this.nuevoCliente })
-        this.editIndex = null
-      }
-      this.resetFormulario()
+    async obtenerClientes() {
+      const res = await api.get('/clientes')
+      this.clientes = res.data
     },
-    eliminarCliente(index) {
-      this.clientes.splice(index, 1)
+    async crearCliente() {
+      await api.post('/clientes', this.nuevoCliente)
+      this.nuevoCliente = { nombre: '', nit: '', direccion: '' }
+      this.obtenerClientes()
     },
-    editarCliente(index) {
-      this.nuevoCliente = { ...this.clientes[index] }
-      this.editIndex = index
-    },
-    resetFormulario() {
-      this.nuevoCliente = { nombre: '', ci: '', email: '' }
+    async eliminarCliente(id) {
+      await api.delete(`/clientes/${id}`)
+      this.obtenerClientes()
     }
   }
 }
 </script>
+
 
 <style scoped>
 .form-grid {

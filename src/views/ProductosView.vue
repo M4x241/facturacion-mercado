@@ -46,8 +46,15 @@
               <td>${{ producto.precio.toFixed(2) }}</td>
               <td>{{ producto.stock }}</td>
               <td>
-                <button class="btn btn-secondary" @click="editarProducto(index)">✏️</button>
-                <button class="btn btn-danger" @click="eliminarProducto(index)">🗑️</button>
+                <button
+                  class="btn btn-secondary"
+                  @click="editarProducto(index)"
+                >
+                  ✏️
+                </button>
+                <button class="btn btn-danger" @click="eliminarProducto(index)">
+                  🗑️
+                </button>
               </td>
             </tr>
           </tbody>
@@ -62,35 +69,65 @@
 </template>
 
 <script>
+import api from "../utils/api";
+
 export default {
-  name: 'ProductosView',
+  name: "ProductosView",
   data() {
     return {
-      productos: [
-        { nombre: 'Arroz', precio: 5.25, stock: 120 },
-        { nombre: 'Aceite', precio: 8.10, stock: 85 },
-        { nombre: 'Fideos', precio: 2.75, stock: 200 }
-      ],
+      productos: [],
       nuevoProducto: {
-        nombre: '',
+        id: null,
+        nombre: "",
         precio: 0,
-        stock: 0
+        stock: 0,
       },
-      editIndex: null
-    }
+      editIndex: null,
+    };
+  },
+  mounted() {
+    this.cargarProductos();
   },
   methods: {
-    agregarProducto() {
-      if (this.editIndex === null) {
-        this.productos.push({ ...this.nuevoProducto });
-      } else {
-        this.productos.splice(this.editIndex, 1, { ...this.nuevoProducto });
-        this.editIndex = null;
+    async cargarProductos() {
+      try {
+        const res = await api.get("/productos");
+        this.productos = res.data.map((p) => ({
+          ...p,
+          precio: Number(p.precio), // <- aquí está el truco
+        }));
+      } catch (error) {
+        console.error("Error al cargar productos:", error);
       }
-      this.resetFormulario();
     },
-    eliminarProducto(index) {
-      this.productos.splice(index, 1);
+    async agregarProducto() {
+      try {
+        if (this.editIndex === null) {
+          const res = await api.post("/productos", this.nuevoProducto);
+          this.productos.push(res.data);
+        } else {
+          const id = this.nuevoProducto.id;
+          await api.put(`/productos/${id}`, this.nuevoProducto);
+          this.productos.splice(this.editIndex, 1, { ...this.nuevoProducto });
+          this.editIndex = null;
+        }
+        this.resetFormulario();
+      } catch (error) {
+        console.error("Error al guardar producto:", error);
+        alert("❌ Error al guardar el producto");
+      }
+    },
+    async eliminarProducto(index) {
+      const producto = this.productos[index];
+      if (!confirm(`¿Eliminar "${producto.nombre}"?`)) return;
+
+      try {
+        await api.delete(`/productos/${producto.id}`);
+        this.productos.splice(index, 1);
+      } catch (error) {
+        console.error("Error al eliminar producto:", error);
+        alert("❌ No se pudo eliminar");
+      }
     },
     editarProducto(index) {
       const producto = this.productos[index];
@@ -99,13 +136,14 @@ export default {
     },
     resetFormulario() {
       this.nuevoProducto = {
-        nombre: '',
+        id: null,
+        nombre: "",
         precio: 0,
-        stock: 0
+        stock: 0,
       };
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
